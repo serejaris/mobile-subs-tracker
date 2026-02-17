@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
-import { getMonthlyAmount, getYearlyAmount, formatAmount, CATEGORY_LABELS, type Category } from '@/lib/types';
+import { getMonthlyAmount, getMonthlyAmountInCurrency, getYearlyAmount, getYearlyAmountInCurrency, formatAmount, getDisplayCurrency, CATEGORY_LABELS, type Category } from '@/lib/types';
 import Svg, { Circle, G } from 'react-native-svg';
 
 interface CategoryData {
@@ -67,7 +67,7 @@ function DonutChart({ data, total, currency }: { data: CategoryData[]; total: nu
   );
 }
 
-function CategoryRow({ item }: { item: CategoryData }) {
+function CategoryRow({ item, displayCurrency }: { item: CategoryData; displayCurrency: 'RUB' | 'USD' | 'EUR' }) {
   return (
     <View style={styles.catRow}>
       <View style={[styles.catDot, { backgroundColor: item.color }]} />
@@ -76,7 +76,7 @@ function CategoryRow({ item }: { item: CategoryData }) {
         <Text style={styles.catCount}>{item.count} {item.count === 1 ? 'subscription' : 'subscriptions'}</Text>
       </View>
       <View style={styles.catRight}>
-        <Text style={styles.catAmount}>{formatAmount(Math.round(item.amount), 'RUB')}</Text>
+        <Text style={styles.catAmount}>{formatAmount(Math.round(item.amount), displayCurrency)}</Text>
         <Text style={styles.catPercent}>{item.percentage.toFixed(0)}%</Text>
       </View>
     </View>
@@ -102,21 +102,16 @@ export default function AnalyticsScreen() {
   const { subscriptions } = useSubscriptions();
   const activeSubs = useMemo(() => subscriptions.filter(s => s.status === 'active'), [subscriptions]);
 
-  const mainCurrency = useMemo(() => {
-    if (activeSubs.length === 0) return 'RUB' as const;
-    const counts: Record<string, number> = {};
-    activeSubs.forEach(s => { counts[s.currency] = (counts[s.currency] || 0) + 1; });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as 'RUB' | 'USD' | 'EUR';
-  }, [activeSubs]);
+  const mainCurrency = useMemo(() => getDisplayCurrency(activeSubs), [activeSubs]);
 
   const totalMonthly = useMemo(() => {
-    return activeSubs.reduce((sum, s) => sum + getMonthlyAmount(s.amount, s.billingCycle), 0);
-  }, [activeSubs]);
+    return activeSubs.reduce((sum, s) => sum + getMonthlyAmountInCurrency(s.amount, s.billingCycle, s.currency, mainCurrency), 0);
+  }, [activeSubs, mainCurrency]);
 
   const categoryData = useMemo((): CategoryData[] => {
     const map = new Map<Category, { amount: number; count: number }>();
     activeSubs.forEach(s => {
-      const monthly = getMonthlyAmount(s.amount, s.billingCycle);
+      const monthly = getMonthlyAmountInCurrency(s.amount, s.billingCycle, s.currency, mainCurrency);
       const existing = map.get(s.category) || { amount: 0, count: 0 };
       map.set(s.category, { amount: existing.amount + monthly, count: existing.count + 1 });
     });
@@ -138,15 +133,18 @@ export default function AnalyticsScreen() {
 
     if (activeSubs.length === 0) return result;
 
-    const sorted = [...activeSubs].sort((a, b) => getMonthlyAmount(b.amount, b.billingCycle) - getMonthlyAmount(a.amount, a.billingCycle));
+    const sorted = [...activeSubs].sort((a, b) =>
+      getMonthlyAmountInCurrency(b.amount, b.billingCycle, b.currency, mainCurrency) -
+      getMonthlyAmountInCurrency(a.amount, a.billingCycle, a.currency, mainCurrency)
+    );
     const mostExpensive = sorted[0];
     if (mostExpensive) {
-      const monthlyAmount = getMonthlyAmount(mostExpensive.amount, mostExpensive.billingCycle);
+      const monthlyAmount = getMonthlyAmountInCurrency(mostExpensive.amount, mostExpensive.billingCycle, mostExpensive.currency, mainCurrency);
       const pct = totalMonthly > 0 ? ((monthlyAmount / totalMonthly) * 100).toFixed(0) : '0';
       result.push({
         icon: 'trending-up',
         title: `${mostExpensive.name} is your biggest expense`,
-        description: `It takes up ${pct}% of your total monthly spending (${formatAmount(Math.round(monthlyAmount), mostExpensive.currency)}/mo)`,
+        description: `It takes up ${pct}% of your total monthly spending (${formatAmount(Math.round(monthlyAmount), mainCurrency)}/mo)`,
         color: Colors.warning,
       });
     }
@@ -168,7 +166,7 @@ export default function AnalyticsScreen() {
       });
     }
 
-    const yearlyTotal = activeSubs.reduce((sum, s) => sum + getYearlyAmount(s.amount, s.billingCycle), 0);
+    const yearlyTotal = activeSubs.reduce((sum, s) => sum + getYearlyAmountInCurrency(s.amount, s.billingCycle, s.currency, mainCurrency), 0);
     result.push({
       icon: 'calendar',
       title: `${formatAmount(Math.round(yearlyTotal), mainCurrency)} per year`,
@@ -217,7 +215,7 @@ export default function AnalyticsScreen() {
                 <DonutChart data={categoryData} total={totalMonthly} currency={mainCurrency} />
                 <View style={styles.catList}>
                   {categoryData.map(item => (
-                    <CategoryRow key={item.category} item={item} />
+                    <CategoryRow key={item.category} item={item} displayCurrency={mainCurrency} />
                   ))}
                 </View>
               </View>

@@ -66,6 +66,17 @@ export const STATUS_LABELS: Record<SubscriptionStatus, string> = {
   expired: 'Expired',
 };
 
+export const EXCHANGE_RATES: Record<Currency, Record<Currency, number>> = {
+  RUB: { RUB: 1, USD: 0.011, EUR: 0.010 },
+  USD: { RUB: 92, USD: 1, EUR: 0.92 },
+  EUR: { RUB: 100, USD: 1.09, EUR: 1 },
+};
+
+export function convertCurrency(amount: number, from: Currency, to: Currency): number {
+  if (from === to) return amount;
+  return amount * EXCHANGE_RATES[from][to];
+}
+
 export function getMonthlyAmount(amount: number, cycle: BillingCycle): number {
   switch (cycle) {
     case 'weekly': return amount * 4.33;
@@ -73,6 +84,10 @@ export function getMonthlyAmount(amount: number, cycle: BillingCycle): number {
     case 'quarterly': return amount / 3;
     case 'yearly': return amount / 12;
   }
+}
+
+export function getMonthlyAmountInCurrency(amount: number, cycle: BillingCycle, from: Currency, to: Currency): number {
+  return convertCurrency(getMonthlyAmount(amount, cycle), from, to);
 }
 
 export function getYearlyAmount(amount: number, cycle: BillingCycle): number {
@@ -84,6 +99,10 @@ export function getYearlyAmount(amount: number, cycle: BillingCycle): number {
   }
 }
 
+export function getYearlyAmountInCurrency(amount: number, cycle: BillingCycle, from: Currency, to: Currency): number {
+  return convertCurrency(getYearlyAmount(amount, cycle), from, to);
+}
+
 export function formatAmount(amount: number, currency: Currency): string {
   const symbol = CURRENCY_SYMBOLS[currency];
   const formatted = amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -91,4 +110,11 @@ export function formatAmount(amount: number, currency: Currency): string {
     return `${symbol}${formatted}`;
   }
   return `${formatted} ${symbol}`;
+}
+
+export function getDisplayCurrency(subscriptions: { currency: Currency }[]): Currency {
+  if (subscriptions.length === 0) return 'RUB';
+  const counts: Record<string, number> = {};
+  subscriptions.forEach(s => { counts[s.currency] = (counts[s.currency] || 0) + 1; });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as Currency;
 }

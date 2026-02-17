@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
-import { formatAmount, getMonthlyAmount, CATEGORY_LABELS, CYCLE_LABELS, STATUS_LABELS, type Subscription, type SubscriptionStatus, type Category } from '@/lib/types';
+import { formatAmount, getMonthlyAmount, getMonthlyAmountInCurrency, getDisplayCurrency, CATEGORY_LABELS, CYCLE_LABELS, STATUS_LABELS, type Subscription, type SubscriptionStatus, type Category } from '@/lib/types';
 
 function SubscriptionCard({ item, onPress }: { item: Subscription; onPress: () => void }) {
   const monthly = getMonthlyAmount(item.amount, item.billingCycle);
@@ -59,14 +59,19 @@ export default function SubscriptionsScreen() {
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
 
+  const displayCurrency = useMemo(() => getDisplayCurrency(subscriptions), [subscriptions]);
+
   const filtered = useMemo(() => {
     return subscriptions.filter(s => {
       if (statusFilter !== 'all' && s.status !== statusFilter) return false;
       if (categoryFilter !== 'all' && s.category !== categoryFilter) return false;
       if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
-    }).sort((a, b) => getMonthlyAmount(b.amount, b.billingCycle) - getMonthlyAmount(a.amount, a.billingCycle));
-  }, [subscriptions, statusFilter, categoryFilter, search]);
+    }).sort((a, b) =>
+      getMonthlyAmountInCurrency(b.amount, b.billingCycle, b.currency, displayCurrency) -
+      getMonthlyAmountInCurrency(a.amount, a.billingCycle, a.currency, displayCurrency)
+    );
+  }, [subscriptions, statusFilter, categoryFilter, search, displayCurrency]);
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
 

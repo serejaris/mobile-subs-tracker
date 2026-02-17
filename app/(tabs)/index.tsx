@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
-import { getMonthlyAmount, getYearlyAmount, formatAmount, CATEGORY_LABELS, CURRENCY_SYMBOLS, type Category, type Subscription } from '@/lib/types';
+import { getMonthlyAmount, getMonthlyAmountInCurrency, getYearlyAmount, getYearlyAmountInCurrency, formatAmount, getDisplayCurrency, CATEGORY_LABELS, CURRENCY_SYMBOLS, type Category, type Subscription } from '@/lib/types';
 import { format, differenceInDays, parseISO } from 'date-fns';
 
 function StatCard({ title, value, subtitle, icon, color }: { title: string; value: string; subtitle?: string; icon: string; color: string }) {
@@ -43,8 +43,8 @@ function UpcomingItem({ sub }: { sub: Subscription }) {
   );
 }
 
-function TopSubscriptionItem({ sub, rank }: { sub: Subscription; rank: number }) {
-  const monthly = getMonthlyAmount(sub.amount, sub.billingCycle);
+function TopSubscriptionItem({ sub, rank, displayCurrency }: { sub: Subscription; rank: number; displayCurrency: 'RUB' | 'USD' | 'EUR' }) {
+  const monthly = getMonthlyAmountInCurrency(sub.amount, sub.billingCycle, sub.currency, displayCurrency);
   return (
     <View style={styles.topItem}>
       <Text style={styles.topRank}>{rank}</Text>
@@ -53,7 +53,7 @@ function TopSubscriptionItem({ sub, rank }: { sub: Subscription; rank: number })
         <Text style={styles.topName}>{sub.name}</Text>
         <Text style={styles.topCategory}>{CATEGORY_LABELS[sub.category]}</Text>
       </View>
-      <Text style={styles.topAmount}>{formatAmount(monthly, sub.currency)}/mo</Text>
+      <Text style={styles.topAmount}>{formatAmount(Math.round(monthly), displayCurrency)}/mo</Text>
     </View>
   );
 }
@@ -70,20 +70,15 @@ export default function DashboardScreen() {
 
   const activeSubs = useMemo(() => subscriptions.filter(s => s.status === 'active'), [subscriptions]);
 
+  const mainCurrency = useMemo(() => getDisplayCurrency(activeSubs), [activeSubs]);
+
   const totalMonthly = useMemo(() => {
-    return activeSubs.reduce((sum, s) => sum + getMonthlyAmount(s.amount, s.billingCycle), 0);
-  }, [activeSubs]);
+    return activeSubs.reduce((sum, s) => sum + getMonthlyAmountInCurrency(s.amount, s.billingCycle, s.currency, mainCurrency), 0);
+  }, [activeSubs, mainCurrency]);
 
   const totalYearly = useMemo(() => {
-    return activeSubs.reduce((sum, s) => sum + getYearlyAmount(s.amount, s.billingCycle), 0);
-  }, [activeSubs]);
-
-  const mainCurrency = useMemo(() => {
-    if (activeSubs.length === 0) return 'RUB' as const;
-    const counts: Record<string, number> = {};
-    activeSubs.forEach(s => { counts[s.currency] = (counts[s.currency] || 0) + 1; });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as 'RUB' | 'USD' | 'EUR';
-  }, [activeSubs]);
+    return activeSubs.reduce((sum, s) => sum + getYearlyAmountInCurrency(s.amount, s.billingCycle, s.currency, mainCurrency), 0);
+  }, [activeSubs, mainCurrency]);
 
   const upcomingSubs = useMemo(() => {
     return activeSubs
@@ -97,9 +92,12 @@ export default function DashboardScreen() {
 
   const topSubs = useMemo(() => {
     return [...activeSubs]
-      .sort((a, b) => getMonthlyAmount(b.amount, b.billingCycle) - getMonthlyAmount(a.amount, a.billingCycle))
+      .sort((a, b) =>
+        getMonthlyAmountInCurrency(b.amount, b.billingCycle, b.currency, mainCurrency) -
+        getMonthlyAmountInCurrency(a.amount, a.billingCycle, a.currency, mainCurrency)
+      )
       .slice(0, 5);
-  }, [activeSubs]);
+  }, [activeSubs, mainCurrency]);
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
 
@@ -191,7 +189,7 @@ export default function DashboardScreen() {
             <Text style={styles.sectionTitle}>Most expensive</Text>
             <View style={styles.sectionCard}>
               {topSubs.map((sub, i) => (
-                <TopSubscriptionItem key={sub.id} sub={sub} rank={i + 1} />
+                <TopSubscriptionItem key={sub.id} sub={sub} rank={i + 1} displayCurrency={mainCurrency} />
               ))}
             </View>
           </View>
