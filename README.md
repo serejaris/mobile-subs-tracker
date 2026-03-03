@@ -1,34 +1,28 @@
 # SubTrack
 
-Трекер подписок — мобильное приложение на Expo (React Native). Демо-проект курса [«Вайбкодинг: мобильное приложение за 3 недели»](https://github.com/serejaris/teach-vibecoding-mobile).
+Трекер подписок — мобильное приложение. Создано без единой строчки кода вручную.
+
+Демо-проект курса [«Вайбкодинг: мобильное приложение за 3 недели»](https://github.com/serejaris/teach-vibecoding-mobile).
 
 ## Что умеет
 
-- Dashboard с общей суммой подписок
-- Добавление / редактирование / удаление подписок
-- Аналитика с donut-чартами по категориям
+- Дашборд — сколько ты тратишь на подписки в месяц
+- Добавление, редактирование, удаление подписок
+- Аналитика по категориям (стриминг, музыка, игры и т.д.)
 - Напоминания о списаниях
-- Мультивалютность (RUB, USD, EUR)
-- 12 категорий (стриминг, музыка, игры, продуктивность и др.)
+- Поддержка рублей, долларов и евро
 - Онбординг с популярными подписками
 
-## Происхождение
+## Как создавался
 
-Экспорт из [Replit](https://replit.com/@serejaris/Subscription-Insight) — создан на уроке 1 курса через AI-агент, без ручного кода.
+Экспорт из [Replit](https://replit.com/@serejaris/Subscription-Insight) — на уроке 1 курса AI-агент сгенерировал приложение по промпту. Код руками не писали.
 
 ## Ветки
 
-| Ветка | Состояние |
-|-------|-----------|
+| Ветка | Что внутри |
+|-------|------------|
 | `main` | Актуальная версия |
-| `lesson-4-start` | Снимок до онбординга (начало урока 5) |
-
-## Стек
-
-- **Frontend:** Expo SDK 54, React Native 0.81, Expo Router
-- **Backend:** Express 5 (scaffolded)
-- **Хранение:** AsyncStorage (локально на устройстве)
-- **Стилизация:** Dark theme, slate/teal palette, Inter font
+| `lesson-4-start` | Снимок до добавления онбординга — старт урока 5 |
 
 ## Запуск
 
@@ -37,22 +31,47 @@ npm install
 npm start
 ```
 
-Приложение откроется в Expo Go на телефоне или в браузере.
+Откроется в [Expo Go](https://expo.dev/go) на телефоне или в браузере.
 
-## Структура
+---
+
+## Промпты из курса
+
+### Дизайн онбординга в Google Stitch
+
+Открой [stitch.withgoogle.com](https://stitch.withgoogle.com) → App → 3 Flash. Вставь:
 
 ```
-app/                    # Expo Router — экраны
-  (tabs)/               # Tab-навигация (dashboard, subscriptions, analytics, reminders)
-  add-subscription.tsx  # Модалка добавления
-  edit-subscription.tsx # Модалка редактирования
-  onboarding.tsx        # Онбординг
-components/             # Переиспользуемые компоненты
-constants/              # Тема и цвета
-lib/                    # Утилиты, контекст, типы
-server/                 # Express backend (scaffolded)
-shared/                 # Общие типы и схемы
+Onboarding for a subscription tracker app "Sub Tracker".
+5 mobile screens: welcome, 3 quiz questions about spending habits, results.
+Style: dark theme, green accents, rounded cards.
 ```
+
+20 секунд — 5 экранов готовы. Не нравится — дописывай модификации в то же поле.
+
+### Промпт для AI-агента (VS Code Copilot / Claude Code / Cursor)
+
+Скопируй HTML из Stitch (вкладка Code), вставь в чат агенту, и допиши:
+
+```
+Добавь онбординг в моё приложение. Дизайн экранов — в коде выше.
+
+Экраны:
+1. Welcome — "Track Your Subscriptions", кнопка "Get Started"
+2. Квиз — 3 вопроса
+3. Загрузка с прогресс-баром
+4. Результат
+
+Сначала составь план.
+```
+
+Агент сначала покажет план — одобряешь, и он строит.
+
+### Если есть артефакт из урока 3
+
+В артефакте — все экраны, тексты, кнопки. Можно вставить его целиком в Stitch вместо трёх строк и получить точный дизайн. Подробнее — [промпт-трансформер](https://github.com/serejaris/teach-vibecoding-mobile/blob/main/prompts/onboarding-to-code-bridge.md).
+
+---
 
 ## Лицензия
 
