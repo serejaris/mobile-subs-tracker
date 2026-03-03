@@ -72,7 +72,7 @@ Style: dark theme, green accents, rounded cards.
 
 ### Если есть артефакт из урока 3
 
-В артефакте — все экраны, тексты, кнопки. Можно вставить его целиком в Stitch вместо трёх строк и получить точный дизайн. Подробнее — [промпт-трансформер](https://github.com/serejaris/teach-vibecoding-mobile/blob/main/prompts/onboarding-to-code-bridge.md).
+В артефакте — все экраны, тексты, кнопки. Можно вставить его целиком в Stitch вместо трёх строк и получить точный дизайн.
 
 ---
 
