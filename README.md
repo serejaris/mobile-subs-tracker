@@ -4,6 +4,14 @@
 
 Демо-проект курса [«Вайбкодинг: мобильное приложение за 3 недели»](https://github.com/serejaris/teach-vibecoding-mobile).
 
+## Скриншоты
+
+<p align="center">
+  <img src="assets/screenshots/dashboard.png" width="270" alt="Dashboard" />
+  <img src="assets/screenshots/subscriptions.png" width="270" alt="Subscriptions" />
+  <img src="assets/screenshots/analytics.png" width="270" alt="Analytics" />
+</p>
+
 ## Что умеет
 
 - Дашборд — сколько ты тратишь на подписки в месяц
