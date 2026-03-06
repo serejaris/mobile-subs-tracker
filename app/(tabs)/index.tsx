@@ -5,10 +5,11 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { CloudStateCard } from '@/components/CloudStateCard';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
-import { getMonthlyAmount, getMonthlyAmountInCurrency, getYearlyAmount, getYearlyAmountInCurrency, formatAmount, getDisplayCurrency, CATEGORY_LABELS, CURRENCY_SYMBOLS, type Category, type Subscription } from '@/lib/types';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { getMonthlyAmountInCurrency, getYearlyAmountInCurrency, formatAmount, getDisplayCurrency, CATEGORY_LABELS, type Subscription } from '@/lib/types';
+import { differenceInDays, parseISO } from 'date-fns';
 
 function StatCard({ title, value, subtitle, icon, color }: { title: string; value: string; subtitle?: string; icon: string; color: string }) {
   return (
@@ -60,7 +61,7 @@ function TopSubscriptionItem({ sub, rank, displayCurrency }: { sub: Subscription
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { subscriptions, isLoading, hasCompletedOnboarding } = useSubscriptions();
+  const { subscriptions, isLoading, errorMessage, hasCompletedOnboarding, reloadSubscriptions } = useSubscriptions();
 
   useEffect(() => {
     if (!isLoading && !hasCompletedOnboarding) {
@@ -105,7 +106,29 @@ export default function DashboardScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top + webTopInset }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <CloudStateCard
+            icon="cloud-download-outline"
+            title="Remembering your subscriptions"
+            description="SubTrack is loading your list from Supabase."
+          />
+        </View>
+      </View>
+    );
+  }
+
+  if (errorMessage && subscriptions.length === 0) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top + webTopInset }]}>
+        <View style={styles.loadingContainer}>
+          <CloudStateCard
+            icon="cloud-offline-outline"
+            title="Cloud memory is unavailable"
+            description={errorMessage}
+            actionLabel="Try again"
+            onAction={() => {
+              void reloadSubscriptions();
+            }}
+          />
         </View>
       </View>
     );
@@ -135,6 +158,23 @@ export default function DashboardScreen() {
             <Ionicons name="add" size={24} color={Colors.white} />
           </Pressable>
         </View>
+
+        {errorMessage ? (
+          <View style={styles.warningBanner}>
+            <View style={styles.warningCopy}>
+              <Text style={styles.warningTitle}>Cloud sync needs attention</Text>
+              <Text style={styles.warningText}>{errorMessage}</Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                void reloadSubscriptions();
+              }}
+              style={({ pressed }) => [styles.warningButton, pressed && { opacity: 0.85 }]}
+            >
+              <Text style={styles.warningButtonText}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         <LinearGradient
           colors={[Colors.primary, Colors.primaryDark]}
@@ -198,8 +238,8 @@ export default function DashboardScreen() {
         {subscriptions.length === 0 && (
           <View style={styles.emptyContainer}>
             <Ionicons name="card-outline" size={48} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>No subscriptions yet</Text>
-            <Text style={styles.emptyText}>Add your first subscription to start tracking your spending</Text>
+            <Text style={styles.emptyTitle}>Your cloud list is empty</Text>
+            <Text style={styles.emptyText}>Add your first subscription and it will still be here after you reopen the app.</Text>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -229,11 +269,49 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   loadingText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 16,
     color: Colors.textSecondary,
+  },
+  warningBanner: {
+    backgroundColor: Colors.card,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  warningCopy: {
+    flex: 1,
+  },
+  warningTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: Colors.text,
+  },
+  warningText: {
+    marginTop: 4,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    color: Colors.textSecondary,
+  },
+  warningButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  warningButtonText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    color: Colors.white,
   },
   header: {
     flexDirection: 'row',

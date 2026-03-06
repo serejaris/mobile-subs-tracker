@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { CloudStateCard } from '@/components/CloudStateCard';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
 import { formatAmount, getMonthlyAmount, getMonthlyAmountInCurrency, getDisplayCurrency, CATEGORY_LABELS, CYCLE_LABELS, STATUS_LABELS, type Subscription, type SubscriptionStatus, type Category } from '@/lib/types';
@@ -54,7 +55,7 @@ const CATEGORIES: { key: Category | 'all'; label: string }[] = [
 
 export default function SubscriptionsScreen() {
   const insets = useSafeAreaInsets();
-  const { subscriptions } = useSubscriptions();
+  const { subscriptions, isLoading, errorMessage, reloadSubscriptions } = useSubscriptions();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
@@ -74,6 +75,7 @@ export default function SubscriptionsScreen() {
   }, [subscriptions, statusFilter, categoryFilter, search, displayCurrency]);
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
+  const hasActiveFilters = search.length > 0 || statusFilter !== 'all' || categoryFilter !== 'all';
 
   const renderItem = useCallback(({ item }: { item: Subscription }) => (
     <SubscriptionCard
@@ -164,6 +166,34 @@ export default function SubscriptionsScreen() {
     </View>
   ), [insets.top, search, statusFilter, categoryFilter, webTopInset]);
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.stateScreen]}>
+        <CloudStateCard
+          icon="cloud-download-outline"
+          title="Loading your cloud subscriptions"
+          description="SubTrack is pulling your saved list from Supabase."
+        />
+      </View>
+    );
+  }
+
+  if (errorMessage && subscriptions.length === 0) {
+    return (
+      <View style={[styles.container, styles.stateScreen]}>
+        <CloudStateCard
+          icon="cloud-offline-outline"
+          title="Could not load subscriptions"
+          description={errorMessage}
+          actionLabel="Try again"
+          onAction={() => {
+            void reloadSubscriptions();
+          }}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -176,10 +206,27 @@ export default function SubscriptionsScreen() {
           { paddingBottom: Platform.OS === 'web' ? 34 + 84 : 100 },
         ]}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="search-outline" size={40} color={Colors.textMuted} />
-            <Text style={styles.emptyText}>No subscriptions found</Text>
-          </View>
+          subscriptions.length === 0 ? (
+            <View style={styles.empty}>
+              <CloudStateCard
+                icon="card-outline"
+                title="Your cloud list is empty"
+                description="Add your first subscription and it will stay with you after the next app restart."
+                actionLabel="Add subscription"
+                onAction={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push('/add-subscription');
+                }}
+              />
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Ionicons name="search-outline" size={40} color={Colors.textMuted} />
+              <Text style={styles.emptyText}>
+                {hasActiveFilters ? 'No subscriptions match these filters' : 'No subscriptions found'}
+              </Text>
+            </View>
+          )
         }
         showsVerticalScrollIndicator={false}
       />
@@ -191,6 +238,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  stateScreen: {
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   header: {
     flexDirection: 'row',
@@ -335,6 +386,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 60,
     gap: 12,
+    paddingBottom: 24,
   },
   emptyText: {
     fontFamily: 'Inter_500Medium',

@@ -46,6 +46,28 @@
 
 ## Переменные окружения
 
+### Урок 6: облачная память через Supabase
+
+Для облачной памяти подписок задайте:
+
+- `EXPO_PUBLIC_SUPABASE_URL` — URL проекта из `Project Settings → API`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` — публичный `anon` ключ из `Project Settings → API`
+
+Перед первым запуском:
+
+1. Создай пустой проект в Supabase
+2. Открой SQL Editor
+3. Вставь SQL из файла [docs/lesson-6-supabase.sql](docs/lesson-6-supabase.sql)
+4. Убедись, что в приложение попал именно `anon key`, а не `service_role`
+
+Важно:
+
+- В этом уроке Supabase решает память данных, а не хранение секретов AI
+- `service_role` ключ нельзя вставлять в мобильное приложение
+- Политики в SQL-файле сделаны специально для учебного демо без auth
+
+### Урок 5: AI Coach через backend + OpenRouter
+
 Для экрана AI Coach с backend-интеграцией OpenRouter задайте:
 
 - `OPENROUTER_API_KEY` — API-ключ OpenRouter (обязателен для генерации инсайтов)

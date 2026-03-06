@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, ScrollView, Platform } from 'react-native';
+import { Alert, StyleSheet, Text, View, TextInput, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
-import { CATEGORY_LABELS, CYCLE_LABELS, type Category, type BillingCycle, type Currency, type SubscriptionStatus } from '@/lib/types';
+import { CATEGORY_LABELS, type Category, type BillingCycle, type Currency } from '@/lib/types';
 import { format, addMonths } from 'date-fns';
 
 const CURRENCIES: { key: Currency; label: string }[] = [
@@ -45,19 +45,28 @@ export default function AddSubscriptionScreen() {
     setSaving(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    await addSubscription({
-      name: name.trim(),
-      amount: parseFloat(amount),
-      currency,
-      billingCycle,
-      nextBillingDate,
-      category,
-      status: 'active',
-      note: note.trim(),
-      ...(isTrial ? { trialEndDate: format(addMonths(new Date(), 0.5), 'yyyy-MM-dd') } : {}),
-    });
+    try {
+      await addSubscription({
+        name: name.trim(),
+        amount: parseFloat(amount),
+        currency,
+        billingCycle,
+        nextBillingDate,
+        category,
+        status: 'active',
+        note: note.trim(),
+        ...(isTrial ? { trialEndDate: format(addMonths(new Date(), 0.5), 'yyyy-MM-dd') } : {}),
+      });
 
-    router.back();
+      router.back();
+    } catch (error) {
+      Alert.alert(
+        'Cloud save failed',
+        error instanceof Error ? error.message : 'Could not save this subscription to Supabase.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

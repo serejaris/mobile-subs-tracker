@@ -5,7 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
-import { CATEGORY_LABELS, CYCLE_LABELS, STATUS_LABELS, type Category, type BillingCycle, type Currency, type SubscriptionStatus } from '@/lib/types';
+import { CATEGORY_LABELS, type Category, type BillingCycle, type Currency, type SubscriptionStatus } from '@/lib/types';
 
 const CURRENCIES: { key: Currency; label: string }[] = [
   { key: 'RUB', label: 'RUB \u20BD' },
@@ -63,17 +63,26 @@ export default function EditSubscriptionScreen() {
     setSaving(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    await updateSubscription(id, {
-      name: name.trim(),
-      amount: parseFloat(amount),
-      currency,
-      billingCycle,
-      category,
-      status,
-      note: note.trim(),
-    });
+    try {
+      await updateSubscription(id, {
+        name: name.trim(),
+        amount: parseFloat(amount),
+        currency,
+        billingCycle,
+        category,
+        status,
+        note: note.trim(),
+      });
 
-    router.back();
+      router.back();
+    } catch (error) {
+      Alert.alert(
+        'Cloud save failed',
+        error instanceof Error ? error.message : 'Could not update this subscription in Supabase.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = () => {
@@ -86,9 +95,16 @@ export default function EditSubscriptionScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            await deleteSubscription(id);
-            router.back();
+            try {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              await deleteSubscription(id);
+              router.back();
+            } catch (error) {
+              Alert.alert(
+                'Cloud delete failed',
+                error instanceof Error ? error.message : 'Could not delete this subscription from Supabase.',
+              );
+            }
           },
         },
       ]

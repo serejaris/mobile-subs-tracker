@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, ScrollView, Platform } from 'react-native';
+import { Alert, StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,7 +34,7 @@ export default function OnboardingScreen() {
   const { addSubscription, completeOnboarding } = useSubscriptions();
   const [step, setStep] = useState(0);
   const [selectedSubs, setSelectedSubs] = useState<Set<number>>(new Set());
-  const [customSubs, setCustomSubs] = useState<QuickSub[]>([]);
+  const [customSubs] = useState<QuickSub[]>([]);
   const [saving, setSaving] = useState(false);
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
@@ -65,27 +65,36 @@ export default function OnboardingScreen() {
     setSaving(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    const promises: Promise<void>[] = [];
+    try {
+      const promises: Promise<void>[] = [];
 
-    selectedSubs.forEach(i => {
-      const s = POPULAR_SUBS[i];
-      promises.push(
-        addSubscription({
-          name: s.name,
-          amount: s.amount,
-          currency: s.currency,
-          billingCycle: s.cycle,
-          nextBillingDate: format(addMonths(new Date(), 1), 'yyyy-MM-dd'),
-          category: s.category,
-          status: 'active',
-          note: '',
-        })
+      selectedSubs.forEach(i => {
+        const s = POPULAR_SUBS[i];
+        promises.push(
+          addSubscription({
+            name: s.name,
+            amount: s.amount,
+            currency: s.currency,
+            billingCycle: s.cycle,
+            nextBillingDate: format(addMonths(new Date(), 1), 'yyyy-MM-dd'),
+            category: s.category,
+            status: 'active',
+            note: '',
+          })
+        );
+      });
+
+      await Promise.all(promises);
+      await completeOnboarding();
+      router.replace('/(tabs)');
+    } catch (error) {
+      Alert.alert(
+        'Cloud save failed',
+        error instanceof Error ? error.message : 'Could not save onboarding subscriptions to Supabase.',
       );
-    });
-
-    await Promise.all(promises);
-    await completeOnboarding();
-    router.replace('/(tabs)');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSkip = async () => {

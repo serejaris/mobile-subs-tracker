@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { useSubscriptions } from '@/lib/subscriptions-context';
-import { getMonthlyAmount, getMonthlyAmountInCurrency, getYearlyAmount, getYearlyAmountInCurrency, formatAmount, getDisplayCurrency, CATEGORY_LABELS, type Category } from '@/lib/types';
+import { getMonthlyAmountInCurrency, getYearlyAmountInCurrency, formatAmount, getDisplayCurrency, CATEGORY_LABELS, type Category } from '@/lib/types';
 import Svg, { Circle, G } from 'react-native-svg';
 
 interface CategoryData {
@@ -126,7 +126,7 @@ export default function AnalyticsScreen() {
         count,
       }))
       .sort((a, b) => b.amount - a.amount);
-  }, [activeSubs, totalMonthly]);
+  }, [activeSubs, totalMonthly, mainCurrency]);
 
   const insights = useMemo(() => {
     const result: { icon: string; title: string; description: string; color: string }[] = [];
