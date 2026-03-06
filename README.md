@@ -44,6 +44,17 @@
 1. Открой [Replit](https://replit.com) → Import from GitHub → вставь ссылку на этот репозиторий
 2. Нажми Run
 
+## Переменные окружения
+
+Для экрана AI Coach с backend-интеграцией OpenRouter задайте:
+
+- `OPENROUTER_API_KEY` — API-ключ OpenRouter (обязателен для генерации инсайтов)
+- `OPENROUTER_MODEL` — опционально, модель OpenRouter (по умолчанию: `google/gemini-3.1-flash-lite-preview`)
+
+Также может использоваться:
+
+- `EXPO_PUBLIC_DOMAIN` — домен приложения для заголовка `HTTP-Referer` в запросах к OpenRouter
+
 ---
 
 ## Промпты из курса

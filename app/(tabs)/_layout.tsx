@@ -18,6 +18,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "list.bullet", selected: "list.bullet" }} />
         <Label>Subscriptions</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="ai-coach">
+        <Icon sf={{ default: "sparkles", selected: "sparkles" }} />
+        <Label>AI Coach</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="analytics">
         <Icon sf={{ default: "chart.pie", selected: "chart.pie.fill" }} />
         <Label>Analytics</Label>
@@ -71,6 +75,15 @@ function ClassicTabLayout() {
           title: "Subscriptions",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ai-coach"
+        options={{
+          title: "AI Coach",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="sparkles" size={size} color={color} />
           ),
         }}
       />
